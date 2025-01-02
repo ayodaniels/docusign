@@ -1,0 +1,71 @@
+<dependencies>
+    <!-- iText 7 dependencies -->
+    <dependency>
+        <groupId>com.itextpdf</groupId>
+        <artifactId>itext7-core</artifactId>
+        <version>7.1.17</version>
+        <scope>compile</scope>
+    </dependency>
+
+    <!-- Bouncy Castle dependency -->
+    <dependency>
+        <groupId>org.bouncycastle</groupId>
+        <artifactId>bcprov-jdk15on</artifactId>
+        <version>1.70</version>
+    </dependency>
+</dependencies>
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.pdf.PdfReader;
+import com.itextpdf.text.pdf.PdfStamper;
+import com.itextpdf.text.pdf.PdfSignatureAppearance;
+import com.itextpdf.text.pdf.security.PrivateKeySignature;
+import com.itextpdf.text.pdf.security.SignatureUtils;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.security.PrivateKey;
+import java.security.Security;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+
+public class SignPdf {
+    public static void main(String[] args) {
+        try {
+            // Load the keystore containing the private key and certificate
+            String keystorePath = "path/to/your/keystore.p12"; // .p12 or .pfx file
+            char[] keystorePassword = "your_keystore_password".toCharArray();
+            char[] keyPassword = "your_key_password".toCharArray();
+
+            // Load the private key and certificate from the keystore
+            KeyStore keystore = KeyStore.getInstance("PKCS12");
+            keystore.load(new FileInputStream(keystorePath), keystorePassword);
+            PrivateKey privateKey = (PrivateKey) keystore.getKey("your_key_alias", keyPassword);
+            Certificate[] certChain = keystore.getCertificateChain("your_key_alias");
+
+            // Create a PDF reader
+            PdfReader pdfReader = new PdfReader("input.pdf");
+            FileOutputStream os = new FileOutputStream("signed_output.pdf");
+
+            // Set up the stamper (used to modify the PDF)
+            PdfStamper stamper = PdfStamper.createSignature(pdfReader, os, '\0');
+
+            // Set the signature appearance (e.g., where it appears in the PDF)
+            PdfSignatureAppearance appearance = stamper.getSignatureAppearance();
+            appearance.setReason("Document signing example");
+            appearance.setLocation("Online");
+            appearance.setSignatureGraphic(new File("signature_image.png"));
+            appearance.setCertificationLevel(PdfSignatureAppearance.CERTIFIED_NO_CHANGES_ALLOWED);
+
+            // Set up the signature handler (signing the document with the private key)
+            PrivateKeySignature signature = new PrivateKeySignature(privateKey, "SHA-256", BouncyCastleProvider.PROVIDER_NAME);
+            SignatureUtils.signature(signature, appearance, certChain);
+
+            // Sign the document
+            stamper.close();
+            System.out.println("PDF signed successfully.");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
