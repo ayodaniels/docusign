@@ -69,3 +69,20 @@ public class SignPdf {
         }
     }
 }
+<properties>
+   <itext.version>9.0.0</itext.version>
+</properties>
+<dependencies>
+	<!-- add all iText modules -->
+    <dependency>
+        <groupId>com.itextpdf</groupId>
+        <artifactId>itext-core</artifactId>
+        <version>${itext.version}</version>
+        <type>pom</type>
+    </dependency>
+    <dependency>
+        <groupId>com.itextpdf</groupId>
+        <artifactId>bouncy-castle-adapter</artifactId>
+        <version>${itext.version}</version>
+    </dependency>
+</dependencies>
